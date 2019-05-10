@@ -10,7 +10,7 @@ var directory = __dirname + '/public';
 /* If we aren't on Heroku, then we need to readjust the port and directory * information and we know that because port won't be set */
 if(typeof port == 'undefined' || !port) {
 	directory = './public';
-	port = 8080;
+	port = 80;
 }
 /* set up a static web-server that will deliver files from the filesystem */
 var file = new static.Server(directory);
