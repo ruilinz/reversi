@@ -121,21 +121,19 @@ players[socket.id].room = room;
 
 
 
-
-
-
 socket.join(room);
 
-var roomObject = io.sockets.adapter.rooms[room];
+    var roomObject = io.sockets.adapter.rooms[room];
     
-    	var numClients = roomObject.length;
-    	var success_data = {
-    		                 result: "success",
-    		                 room: room,
-    		                 username: username,
-    		                 socket_id: socket.id,
-    		                 membership: numClients
-    		             };
+    var numClients = roomObject.length;
+    var success_data = {
+    		              result: "success",
+    		              room: room,
+    		              username: username,
+    		              socket_id: socket.id,
+    		              membership: numClients
+    		          };
+                      
         io.in(room).emit('join_room_response', success_data);
 
         for(var socket_in_room in roomObject.sockets){
