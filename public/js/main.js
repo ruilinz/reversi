@@ -17,7 +17,10 @@ if('undefined'== typeof username || !username){
 	username = 'Anonymous_' +Math.random();
 }
 
-var chat_room = 'One_Room';
+var chat_room = getURLParameters('game_id');
+if('undefined'== typeof chat_room || !chat_room){
+	chat_room ='lobby';
+}
 
 /* Connect to the socket server */
 
@@ -28,13 +31,85 @@ socket.on('log', function(array){
 	console.log.apply(console,array);
 });
 
+
+
 socket.on('join_room_response',function(payload){
 	if(payload.result == 'fail'){
 		alert(payload.message);
 		return;
 	}
-	$('#messages').append('<p>New User joined the room:'+payload.username+'</p>');
-});
+
+      if(payload.socket_id == socket.id){
+      	return;
+      }
+
+      var dom_elements = $('.socket_'+payload.socket_id);
+      if(dom_elements.length == 0){
+      	var nodeA = $('<div></div>');
+      	nodeA.addClass('socket'+payload.socket_id);
+      	var nodeB = $('<div></div>');
+      	nodeB.addClass('socket'+payload.socket_id);
+      	var nodeC = $('<div></div>');
+      	nodeC.addClass('socket'+payload.socket_id);
+
+      	nodeA.addClass('w-100');
+
+      	nodeB.addClass('col-9 text-right');
+      	nodeB.append('<p>'+payload.username+'</p>');
+
+      	nodeC.addClass('col-3 text-left');
+      		var buttonC = makeInviteButton();
+      		nodeC.append(buttonC);
+
+      		nodeA.hide();
+      		nodeB.hide();
+      		nodeC.hide();
+      		$('#players').append(nodeA,nodeB,nodeC);
+      		nodeA.slideDown(1000);
+      		nodeB.slideDown(1000);
+      		nodeC.slideDown(1000);
+
+      }
+      else{
+      	  var buttonC = makeInviteButton();
+      	  $('.socket_'+payload.socket_id+'button').replaceWith(buttonC);
+      	  dom_elements.slideDown(1000);
+      }
+   
+
+       var newHTML ='<P>' + payload.username+' just entered the lobby</p>';
+       var newNode = $(newHTML);
+       newNode.hide();
+       $('#messages').append(newNode);
+       newNode.slideDown(1000);
+   });
+
+
+socket.on('player_disconnected',function(payload){
+	if(payload.result == 'fail'){
+		alert(payload.message);
+		return;
+	}
+
+      if(payload.socket_id == socket.id){
+      	return;
+      }
+
+      var dom_elements = $('.socket_'+payload.socket_id);
+      if(dom_elements.length == 0){
+         dom_elements.slideUP(1000);
+
+      }
+   
+
+       var newHTML ='<P>' + payload.username+' has left the lobby</p>';
+       var newNode = $(newHTML);
+       newNode.hide();
+       $('#messages').append(newNode);
+       newNode.slideDown(1000);
+   });
+
+
 
 
 socket.on('send_message_response',function(payload){
@@ -47,9 +122,6 @@ socket.on('send_message_response',function(payload){
 
 
 
-
-
-
 function send_message(){
 	var payload = {};
 	payload.room = chat_room;
@@ -58,6 +130,16 @@ function send_message(){
 	console.log('*** Client Log Message: \'send_message\' payload: '+JSON.stringify(payload));
 	socket.emit('send_message',payload);
 }
+
+function makeInviteButton(){
+
+	var newHTML = '<button type=\'button\' class =\'btn btn=outline-primary\'>Invite</button>';
+	var newNode = $(newHTML);
+	return(newNode);
+}
+
+
+
 
 $(function(){
 	var payload = {};
