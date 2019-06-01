@@ -152,6 +152,11 @@ socket.join(room);
 
 
         log('join_room success');
+
+        if(room !== 'lobby'){
+            send_game_update(socket, room, 'initial update');
+        }
+
     });
 
     socket.on('disconnect',function(payload){
@@ -440,9 +445,350 @@ var success_data = {
 			game_id: game_id
 		};
 		socket.to(requested_user).emit('game_start_response', success_data);
-		log('uninvite succesful');
-
-
+		log('game_start succesful');
  });
-    
+   
+socket.on('play_token', function(payload) {
+        log('play_token with' + JSON.stringify(payload));
+        if(('undefined' === typeof payload) || !payload) {
+            var error_message = 'play_token had no payload, command aborted';
+            log(error_message);
+            socket.emit('play_token_response', {
+                result: 'fail',
+                message: error_message
+            });
+            return;
+        }
+        var user = players[socket.id];
+        if(('undefined' === typeof user) || !user) {
+            var error_message = 'server does not recognize you, try refreshing, command aborted';
+            log(error_message);
+            socket.emit('play_token_response', {
+                result: 'fail',
+                message: error_message
+            });
+            return;
+        }
+        var username = players[socket.id].username;
+        if(('undefined' === typeof username) || !username) {
+            var error_message = 'play_token cannot idenitfy who sent message, command aborted';
+            log(error_message);
+            socket.emit('play_token_response', {
+                result: 'fail',
+                message: error_message
+            });
+            return;
+        }
+        var game_id = players[socket.id].room;
+        if(('undefined' === typeof game_id) || !game_id) {
+            var error_message = 'play_token cannot find your gameboard, command aborted';
+            log(error_message);
+            socket.emit('play_token_response', {
+                result: 'fail',
+                message: error_message
+            });
+            return;
+        }
+        var row = payload.row;
+        if(('undefined' === typeof row) || row < 0 || row > 7) {
+            var error_message = 'payload did not specify row, command aborted';
+            log(error_message);
+            socket.emit('play_token_response', {
+                result: 'fail',
+                message: error_message
+            });
+            return;
+        }
+        var col = payload.column;
+        if(('undefined' === typeof col) || col < 0 || col > 7) {
+            var error_message = 'payload did not specify col, command aborted';
+            log(error_message);
+            socket.emit('play_token_response', {
+                result: 'fail',
+                message: error_message
+            });
+            return;
+        }
+        var color = payload.color;
+        if(('undefined' === typeof color) || !color || (color != 'white' && color != 'black')) {
+            var error_message = 'payload did not specify color, command aborted';
+            log(error_message);
+            socket.emit('play_token_response', {
+                result: 'fail',
+                message: error_message
+            });
+            return;
+        }
+        var game = games[game_id];
+        if(('undefined' === typeof game) || !game) {
+            var error_message = 'play_token could not find your game board, command aborted';
+            log(error_message);
+            socket.emit('play_token_response', {
+                result: 'fail',
+                message: error_message
+            });
+            return;
+        }
+
+        if(color !== game.whose_turn) {
+            var error_message = 'play_token message played out of turn';
+            log(error_message);
+            socket.emit('play_token_response', {
+                result: 'fail',
+                message: error_message
+            });
+            return;
+        }
+
+        if(((game.whose_turn === 'white') && (game.player_white.socket != socket.id)) ||
+            ((game.whose_turn === 'black') && (game.player_black.socket != socket.id))) {
+            var error_message = 'play_token turn played by wrong player';
+            log(error_message);
+            socket.emit('play_token_response', {
+                result: 'fail',
+                message: error_message
+            });
+            return;
+        }
+
+        var success_data = {
+            result: 'success'
+        };
+        
+        socket.emit('play_token_response', success_data);
+
+        if (color == 'white') {
+            game.board[row][col] = 'w';
+            flip_board('w', row, col, game.board);
+            game.whose_turn = 'black';
+            game.legal_moves = calculate_valid_moves('b', game.board);
+        } else if (color == 'black') {
+            game.board[row][col] = 'b';
+            flip_board('b', row, col, game.board);
+            game.whose_turn = 'white';
+            game.legal_moves = calculate_valid_moves('w', game.board);
+        }
+
+        var d = new Date();
+        game.last_move_time = d.getTime();
+
+        send_game_update(socket, game_id, 'played a token');
+    });
 });
+
+var games =[];
+
+function send_game_update(socket, game_id, message) {
+    if(('undefined' === typeof games[game_id]) || !game_id) {
+        console.log('No game exists. Creating '+game_id+' for '+socket.id);
+        games[game_id] = create_new_game();
+    }
+
+    var roomObject;
+    var numClients;
+
+    do {
+        roomObject = io.sockets.adapter.rooms[game_id];
+        numClients = roomObject.length;
+        if(numClients > 2) {
+            console.log('too many clients in room '+game_id+' #: '+numClients);
+            if(games[game_id].player_white.socket == roomObject.sockets[0]) {
+                games[game_id].player_white.socket = '';
+                games[game_id].player_white.username = '';
+            }
+            if(games[game_id].player_black.socket == roomObject.sockets[0]) {
+                games[game_id].player_black.socket = '';
+                games[game_id].player_black.username = '';
+            }
+            var sacrifice = Object.keys(roomObject.sockets)[0];
+            io.of('/').connected([sacrifice].leave(game_id));
+        }
+    } while((numClients-1) > 2);
+
+    if((games[game_id].player_white.socket != socket.id) && (games[game_id].player_black.socket != socket.id)) {
+        console.log('player is not assigned a color '+socket.id);
+        if((games[game_id].player_white.socket != '') && (games[game_id].player_black.socket != '')) {
+            games[game_id].player_white.socket = '';
+            games[game_id].player_white.username = '';
+            games[game_id].player_black.socket = '';
+            games[game_id].player_black.username = '';
+        }
+    }
+
+    if(games[game_id].player_white.socket == '') {
+        if(games[game_id].player_black.socket != socket.id) {
+            games[game_id].player_white.socket = socket.id;
+            games[game_id].player_white.username = players[socket.id].username;
+        }
+    }
+
+    if(games[game_id].player_black.socket == '') {
+        if(games[game_id].player_white.socket != socket.id) {
+            games[game_id].player_black.socket = socket.id;
+            games[game_id].player_black.username = players[socket.id].username;
+        }
+    }
+
+    var success_data = {
+        result: 'success',
+        game: games[game_id],
+        message: message,
+        game_id: game_id
+    };
+    io.in(game_id).emit('game_update', success_data);
+
+    var row, column;
+    var count = 0;
+    var black = 0;
+    var white = 0;
+    for(row = 0; row < 8; row++) {
+        for(column = 0; column < 8; column++) {
+            if(games[game_id].legal_moves[row][column] != '') {
+                count++;
+            }
+            if(games[game_id].board[row][column] === 'b') {
+                black++;
+            }
+            if(games[game_id].board[row][column] === 'w') {
+                white++;
+            }
+        }
+    }
+    if(count == 0) {
+        var winner = 'tie game';
+        if (black > white) { winner = 'black' }
+        if (white > black) { winner = 'white' }
+        var success_data = {
+            result: 'success',
+            game: games[game_id],
+            who_won: winner,
+            game_id:game_id
+        };
+        io.in(game_id).emit('game_over', success_data);
+    }
+}
+
+function create_new_game(){
+    var new_game ={};
+    new_game.player_white ={};
+    new_game.player_black ={};
+    new_game.player_white.socket ='';
+    new_game.player_white.username ='';
+    new_game.player_black.socket ='';
+    new_game.player_black.username ='';
+
+
+    var d = new Date();
+    new_game.last_move_time = d.getTime();
+
+    new_game.whose_turn ='black';
+
+    new_game.board =[
+                      [' ',' ',' ',' ',' ',' ',' ',' '],
+                      [' ',' ',' ',' ',' ',' ',' ',' '],
+                      [' ',' ',' ',' ',' ',' ',' ',' '],
+                      [' ',' ',' ','w','b',' ',' ',' '],
+                      [' ',' ',' ','b','w',' ',' ',' '],
+                      [' ',' ',' ',' ',' ',' ',' ',' '],
+                      [' ',' ',' ',' ',' ',' ',' ',' '],
+                      [' ',' ',' ',' ',' ',' ',' ',' ']
+
+                     ];
+    new_game.legal_moves = calculate_valid_moves('b', new_game.board);
+
+    return new_game;
+}
+
+function calculate_valid_moves(who, board) {
+
+    var valid = [
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['','','','','','','','']
+    ];
+
+    for(var row = 0; row < 8; row++) {
+        for(var column = 0; column < 8; column++) {
+            if(board[row][column] === '') {
+
+                nw = valid_move(who, -1,-1,row,column,board);
+                nn = valid_move(who, -1,0,row,column,board);
+                ne = valid_move(who, -1,1,row,column,board);
+
+                ww = valid_move(who, 0,-1,row,column,board);
+                ee = valid_move(who, 0,1,row,column,board);
+
+                sw = valid_move(who, 1,-1,row,column,board);
+                ss = valid_move(who, 1,0,row,column,board);
+                se = valid_move(who, 1,1,row,column,board);
+
+                if(nw || nn || ne || ww || ee || sw || ss || se) {
+                    valid[row][column] = who
+                }
+            }
+        }
+    }
+
+    return valid
+}
+
+function valid_move(who, dr, dc, r, c, board) {
+    var other;
+    if(who == 'b') { other = 'w'; }
+    else if(who == 'w') { other = 'b'; }
+    else { console.log('Houston we have a color problem: ' + who); return false; }
+    if ((r+dr < 0) || (r+dr > 7)) { return false; }
+    if ((c+dc < 0) || (c+dc > 7)) { return false; }
+    if (board[r+dr][c+dc] != other) { return false; }
+    if ((r+dr+dr < 0) || (r+dr+dr > 7)) { return false; }
+    if ((c+dc+dc < 0) || (c+dc+dc > 7)) { return false; }
+    return check_line_match(who, dr, dc, r+dr+dr, c+dc+dc, board);
+}
+
+function check_line_match(who, dr, dc, r, c, board) {
+    if(board[r][c] === who) { return true; }
+    if(board[r][c] === '') { return false; }
+    if((r+dr < 0) || (r+dr > 7)) { return false; }
+    if((c+dc < 0) || (c+dc > 7)) { return false; }
+    return check_line_match(who, dr, dc, r+dr, c+dc, board);
+}
+
+function flip_board(who, row, column, board) {
+
+    flip_line(who, -1, -1, row, column, board);
+    flip_line(who, -1, 0, row, column, board);
+    flip_line(who, -1, 1, row, column, board);
+
+    flip_line(who, 0, -1, row, column, board);
+    flip_line(who, 0, 1, row, column, board);
+
+    flip_line(who, 1, -1, row, column, board);
+    flip_line(who, 1, 0, row, column, board);
+    flip_line(who, 1, 1, row, column, board);
+
+}
+
+function flip_line(who, dr, dc, r, c, board) {
+    if ((r+dr < 0) || (r+dr > 7)) { return false; }
+    if ((c+dc < 0) || (c+dc > 7)) { return false; }
+    
+    if (board[r+dr][c+dc] === '') { return false; }
+    if (board[r+dr][c+dc] === who) { return true; }
+    else { 
+        if (flip_line(who, dr, dc, r+dr, c+dc, board)) {
+            board[r+dr][c+dc] = who;
+            return true;
+        } else {
+            return false
+        }
+     }
+}
+
+
+
+
