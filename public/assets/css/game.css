@@ -1,3 +1,25 @@
 body {
                background-image: url("../imgs/green.png");
        }
+
+       table#game_board {
+	margin:auto;
+	border-style: solid;
+	border-width: 10px;
+	border-color: rgb(100,100,100);
+}
+
+table#game_board td {
+	border-style: solid;
+	border-width: 1px;
+	border-color: rgb(50,50,50);
+}
+
+#messages p {
+	margin: 10px;
+}
+
+td.hovered_over:hover {
+	background-image: url('../images/hover.gif');
+	background-size: 100% 100%;
+}
