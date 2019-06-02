@@ -601,7 +601,7 @@ function send_game_update(socket, game_id, message) {
                 games[game_id].player_black.username = '';
             }
             var sacrifice = Object.keys(roomObject.sockets)[0];
-            io.of('/').connected([sacrifice].leave(game_id));
+            io.of('/').connected[sacrifice].leave(game_id);
         }
     } while((numClients-1) > 2);
 
@@ -655,13 +655,13 @@ function send_game_update(socket, game_id, message) {
         var success_data = {
             result: 'success',
             game: games[game_id],
-            who_won: everyone,
+            who_won: 'everyone',
             game_id: game_id
         }; 
 
         io.in(game_id).emit('game_over', success_data);
     }
-}
+
 
 function create_new_game(){
     var new_game ={};
