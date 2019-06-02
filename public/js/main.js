@@ -81,7 +81,7 @@ socket.on('join_room_response',function(payload){
        var newHTML ='<P>' + payload.username+' just entered the lobby </p>';
        var newNode = $(newHTML);
        newNode.hide();
-       $('#messages').append(newNode);
+       $('#messages').prepend(newNode);
        newNode.slideDown(1000);
    });
 
@@ -106,7 +106,7 @@ socket.on('player_disconnected',function(payload){
        var newHTML ='<P>' + payload.username+' has left the lobby</p>';
        var newNode = $(newHTML);
        newNode.hide();
-       $('#messages').append(newNode);
+       $('#messages').prepend(newNode);
        newNode.slideDown(1000);
    });
 
@@ -118,7 +118,7 @@ socket.on('send_message_response', function(payload) {
   var newHTML = '<p><b>'+payload.username+' says:</b> '+payload.message+'</p>';
   var newNode = $(newHTML);
   newNode.hide();
-  $('#messages').append(newNode);
+  $('#messages').prepend(newNode);
   newNode.slideDown(1000);
 });
 
@@ -277,7 +277,7 @@ $(function(){
 	console.log('*** Client Log Message: \'join_room\' payload:'+JSON.stringify(payload));
 	socket.emit('join_room',payload);
 
-  $('#quit').append('<a href="lobby.html?username='+username+'" class="btn btn-danger btn-lg active" role="button" aria-pressed="true">Quit</a>');
+  $('#quit').append('<a href="lobby.html?username='+username+'" class="btn btn-danger btn-default active" role="button" aria-pressed="true">Quit</a>');
 });
 
 
@@ -398,6 +398,9 @@ if(socket.id == payload.game.player_white.socket) {
             }
           } (row, column));
 
+        }
+        else{
+            $('#'+row+'_'+column).removeClass('hovered_over');
         }
       } 
     }
