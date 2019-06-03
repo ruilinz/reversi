@@ -661,6 +661,12 @@ io.sockets.on('connection', function(socket) {
       };
 
       io.in(game_id).emit('game_over', success_data);
+
+      setTimeout(function(id){
+        return function(){
+          delete game[id];
+        }}(game_id)
+        ,60*60*1000);
     }
 }
 
