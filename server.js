@@ -558,12 +558,12 @@ io.sockets.on('connection', function(socket) {
     socket.emit('play_token_response', success_data);
 
     if (color == 'white') {
-      game.board[row][column] = 'w';
+      game.board[row][col] = 'w';
       flip_board('w', row, col, game.board);
       game.whose_turn = 'black';
       game.legal_moves = calculate_valid_moves('b', game.board);
     } else if (color == 'black') {
-      game.board[row][column] = 'b';
+      game.board[row][col] = 'b';
       flip_board('b', row, col, game.board);
       game.whose_turn = 'white';
       game.legal_moves = calculate_valid_moves('w', game.board);
@@ -574,13 +574,13 @@ io.sockets.on('connection', function(socket) {
 
     send_game_update(socket, game_id, 'played a token');
   });
-
+});
 
   var games = [];
 
   function send_game_update(socket, game_id, message) {
     if (('undefined' === typeof games[game_id]) || !game_id) {
-      console.log('No game exists. Creating ' + game_id + ' for ' + socket.id);
+      console.log('No game exists. Creating '+game_id+' for ' +socket.id);
       games[game_id] = create_new_game();
     }
 
@@ -591,7 +591,7 @@ io.sockets.on('connection', function(socket) {
       roomObject = io.sockets.adapter.rooms[game_id];
       numClients = roomObject.length;
       if (numClients > 2) {
-        console.log('too many clients in room ' + game_id + ' #: ' + numClients);
+        console.log('too many clients in room '+game_id+' #: ' +numClients);
         if (games[game_id].player_white.socket == roomObject.sockets[0]) {
           games[game_id].player_white.socket = '';
           games[game_id].player_white.username = '';
@@ -603,7 +603,7 @@ io.sockets.on('connection', function(socket) {
         var sacrifice = Object.keys(roomObject.sockets)[0];
         io.of('/').connected[sacrifice].leave(game_id);
       }
-    } while ((numClients -1) >2);
+    } while ((numClients -1) > 2);
 
     if ((games[game_id].player_white.socket != socket.id) && (games[game_id].player_black.socket != socket.id)) {
       console.log('player is not assigned a color ' + socket.id);
@@ -635,6 +635,7 @@ io.sockets.on('connection', function(socket) {
       message: message,
       game_id: game_id
     };
+
     io.in(game_id).emit('game_update', success_data);
 
     var row, column;
@@ -661,7 +662,7 @@ io.sockets.on('connection', function(socket) {
 
       io.in(game_id).emit('game_over', success_data);
     }
-
+}
 
     function create_new_game() {
       var new_game = {};
@@ -813,5 +814,3 @@ io.sockets.on('connection', function(socket) {
         }
       }
     }
-  };
-});

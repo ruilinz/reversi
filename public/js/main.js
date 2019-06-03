@@ -76,7 +76,7 @@ socket.on('join_room_response',function(payload){
       	  $('.socket_'+payload.socket_id+'button').replaceWith(buttonC);
       	  dom_elements.slideDown(1000);
       }
-   
+
 
        var newHTML ='<P>' + payload.username+' just entered the lobby </p>';
        var newNode = $(newHTML);
@@ -101,7 +101,7 @@ socket.on('player_disconnected',function(payload){
          dom_elements.slideUp(1000);
 
       }
-   
+
 
        var newHTML ='<P>' + payload.username+' has left the lobby</p>';
        var newNode = $(newHTML);
@@ -294,7 +294,7 @@ var old_board =[
                 ];
 
 var my_color = '';
-var interval_timer;                
+var interval_timer;
 
 socket.on('game_update', function(payload){
 	console.log('*** Client Log Message: \'game_update\' payload: ' + JSON.stringify(payload));
@@ -402,7 +402,7 @@ if(socket.id == payload.game.player_white.socket) {
         else{
             $('#'+row+'_'+column).removeClass('hovered_over');
         }
-      } 
+      }
     }
   }
 
