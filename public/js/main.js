@@ -208,24 +208,6 @@ function send_message(){
   $('#send_message_holder').val('');
 }
 
-socket.on('send_message_response', function(payload){
-      if(payload.result == 'fail'){
-          alert(payload.message);
-          return;
-      }
-
-      var newHTML = '<p><b>'+payload.username+' says:</b> '+payload.message+'</p>';
-      var newNode = $(newHTML);
-      newNode.hide();
-      $('#messages').append(newNode);
-      newNode.slideDown(1000);
-});
-
-
-
-
-
-
 
 function makeInviteButton(socket_id){
 
@@ -294,7 +276,6 @@ var old_board =[
                 ];
 
 var my_color = '';
-var interval_timer;
 
 socket.on('game_update', function(payload){
 	console.log('*** Client Log Message: \'game_update\' payload: ' + JSON.stringify(payload));
