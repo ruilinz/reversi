@@ -317,28 +317,6 @@ if(socket.id == payload.game.player_white.socket) {
     window.location.href = 'lobby.html?username='+username;
   }
 
-  $('#my_color').html('<h3 id="my_color">I am '+my_color+'</h3>');
-  $('#my_color').append('<h4>It is '+payload.game.whose_turn+'\'s turn. elapsed time <span id="elapsed"></span></h4>');
-
-  clearInterval(interval_timer);
-  interval_timer = setInterval(function(last_time) {
-    return function() {
-
-      var d = new Date();
-      var elapsedMilli = d.getTime() - last_time;
-      var minutes = Math.floor(elapsedMilli / (60 * 1000));
-      var seconds = Math.floor((elapsedMilli % (60 * 1000)) / 1000);
-
-
-      if(seconds < 10) {
-        $('#elapsed').html(minutes+':0'+seconds);
-      } else {
-        $('#elapsed').html(minutes+':'+seconds);
-      }
-
-    }
-  } (payload.game.last_move_time), 1000);
-
   var blacksum = 0;
   var whitesum = 0;
 
