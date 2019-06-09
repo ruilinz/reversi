@@ -115,7 +115,12 @@ socket.on('send_message_response', function(payload) {
     alert(payload.message);
     return;
   }
-  var newHTML = '<p><b>'+payload.username+' says:</b> '+payload.message+'</p>';
+  var newHTML = '';
+  if (payload.username === username) {
+    newHTML = '<p><b>You sent:</b> '+payload.message+'</p>';
+  } else {
+    newHTML = '<p><b>'+payload.username+' sent:</b> '+payload.message+'</p>';
+  }
   var newNode = $(newHTML);
   newNode.hide();
   $('#messages').prepend(newNode);
@@ -208,6 +213,24 @@ function send_message(){
   $('#send_message_holder').val('');
 }
 
+socket.on('send_message_response', function(payload){
+      if(payload.result == 'fail'){
+          alert(payload.message);
+          return;
+      }
+
+      var newHTML = '<p><b>'+payload.username+' says:</b> '+payload.message+'</p>';
+      var newNode = $(newHTML);
+      newNode.hide();
+      $('#messages').append(newNode);
+      newNode.slideDown(1000);
+});
+
+
+
+
+
+
 
 function makeInviteButton(socket_id){
 
@@ -276,6 +299,7 @@ var old_board =[
                 ];
 
 var my_color = '';
+var interval_timer;
 
 socket.on('game_update', function(payload){
 	console.log('*** Client Log Message: \'game_update\' payload: ' + JSON.stringify(payload));
@@ -297,6 +321,28 @@ if(socket.id == payload.game.player_white.socket) {
   } else {
     window.location.href = 'lobby.html?username='+username;
   }
+
+  $('#my_color').html('<h3 id="my_color">I am '+my_color+'</h3>');
+  $('#my_color').append('<h4>It is '+payload.game.whose_turn+'\'s turn. elapsed time <span id="elapsed"></span></h4>');
+
+  clearInterval(interval_timer);
+  interval_timer = setInterval(function(last_time) {
+    return function() {
+
+      var d = new Date();
+      var elapsedMilli = d.getTime() - last_time;
+      var minutes = Math.floor(elapsedMilli / (60 * 1000));
+      var seconds = Math.floor((elapsedMilli % (60 * 1000)) / 1000);
+
+
+      if(seconds < 10) {
+        $('#elapsed').html(minutes+':0'+seconds);
+      } else {
+        $('#elapsed').html(minutes+':'+seconds);
+      }
+
+    }
+  } (payload.game.last_move_time), 1000);
 
   var blacksum = 0;
   var whitesum = 0;
@@ -358,9 +404,7 @@ if(socket.id == payload.game.player_white.socket) {
           } (row, column));
 
         }
-        else{
-            $('#'+row+'_'+column).removeClass('hovered_over');
-        }
+       
       }
     }
   }

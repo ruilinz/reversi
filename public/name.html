@@ -6,11 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>
     	Enter your user name for Reversi</title>
-
+     <link href="https://fonts.googleapis.com/css?family=Cormorant+Unicase|Indie+Flower|Schoolbell" rel="stylesheet">
     <style>
        #header-row {
-               background-image: url("assets/imgs/green.png");
+               background-image: url("assets/imgs/black.png");
        }
+
+        .indie{
+                  font-family: 'roboto';
+                  font-size: 200%;
+                  color: yellow;
+                  padding-top: 20px;
+                  padding-bottom: 20px;
+      }
+
+      .space{
+        padding-bottom: 50px;
+      }
     </style>
     <script>
     	function submitForm(){
@@ -24,22 +36,24 @@
   </head>
   <body>
     <div class ="container-fluid text-center">
+      <div class="space">
        <div class="row" id="header-row">
         <div class="col">
-          <h2>Enter your User Name</h2>
+          <h2 class="indie">Enter your User Name</h2>
         </div>
        </div>
+     </div>
        <div class="row">
        	 <div class='col'>
        	 	<form onsubmit='submitForm(); return false;' class='form-inline'>
-       	 		<div class='form-group'>
+       	 		<div class='form-group' align="center">
        	 			<label for='username' class='col-form-label sr-only'>Enter your user name</label>
        	 			<input class='form-control' type='text' value='' id='username' placeholder='Enter your user name'/>
        	 		</div>
        	 		<button type='submit' class='btn btn-default btn-primary'>Done</button>
        	 	</form>
+         </div>
        	 </div>
-       	</div>
     </div>
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->

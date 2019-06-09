@@ -1,5 +1,5 @@
 body {
-               background-image: url("../imgs/green.png");
+               background-image: url("../imgs/yellow.png");
        }
 
        table#game_board {
@@ -16,7 +16,8 @@ table#game_board td {
 }
 
 #messages p {
-	margin: 10px;
+	margin: 40px;
+	padding-left: 20px;
 }
 
 td.hovered_over:hover {

@@ -38,7 +38,7 @@ var io = require('socket.io').listen(app);
 
 io.sockets.on('connection', function(socket) {
 
-  log('Client connection by ' + socket.id);
+  log('Client connection by' + socket.id);
 
   function log() {
     var array = ['*** Server Log Message:'];
@@ -429,7 +429,7 @@ io.sockets.on('connection', function(socket) {
       return;
     }
 
-    var game_id = Math.floor(((1 + Math.random()) * 0x100000).toString(16).substring(1));
+    var game_id = Math.random();
 
     var success_data = {
       result: 'success',
@@ -640,25 +640,31 @@ io.sockets.on('connection', function(socket) {
 
     var row, column;
     var count = 0;
-    for (row = 0; row < 8; row++) {
-      for (column = 0; column < 8; column++) {
-        if (games[game_id].board[row][column] != '') {
-          count++;
-        }
-
+    var black = 0;
+  var white = 0;
+  for(row = 0; row < 8; row++) {
+    for(column = 0; column < 8; column++) {
+      if(games[game_id].legal_moves[row][column] != '') {
+        count++;
       }
-
+      if(games[game_id].board[row][column] === 'b') {
+        black++;
+      }
+      if(games[game_id].board[row][column] === 'w') {
+        white++;
+      }
     }
-
-
-    if (count == 64) {
-
-      var success_data = {
-        result: 'success',
-        game: games[game_id],
-        who_won: 'everyone',
-        game_id: game_id
-      };
+  }
+  if(count == 0) {
+    var winner = 'tie game';
+    if (black > white) { winner = 'black' }
+    if (white > black) { winner = 'white' }
+    var success_data = {
+      result: 'success',
+      game: games[game_id],
+      who_won: winner,
+      game_id:game_id
+    };
 
       io.in(game_id).emit('game_over', success_data);
 
@@ -741,62 +747,39 @@ io.sockets.on('connection', function(socket) {
 
     function valid_move(who, dr, dc, r, c, board) {
       var other;
-      if (who == 'b') {
-        other = 'w';
-      } else if (who == 'w') {
-        other = 'b';
-      } else {
-        console.log('Houston we have a color problem: ' + who);
-        return false;
-      }
-      if ((r + dr < 0) || (r + dr > 7)) {
-        return false;
-      }
-      if ((c + dc < 0) || (c + dc > 7)) {
-        return false;
-      }
-      if (board[r + dr][c + dc] != other) {
-        return false;
-      }
-      if ((r + dr + dr < 0) || (r + dr + dr > 7)) {
-        return false;
-      }
-      if ((c + dc + dc < 0) || (c + dc + dc > 7)) {
-        return false;
-      }
-      return check_line_match(who, dr, dc, r + dr + dr, c + dc + dc, board);
-    }
+      if(who == 'b') { other = 'w'; }
+  else if(who == 'w') { other = 'b'; }
+  else { console.log('Houston we have a color problem: ' + who); return false; }
+  if ((r+dr < 0) || (r+dr > 7)) { return false; }
+  if ((c+dc < 0) || (c+dc > 7)) { return false; }
+  if (board[r+dr][c+dc] != other) { return false; }
+  if ((r+dr+dr < 0) || (r+dr+dr > 7)) { return false; }
+  if ((c+dc+dc < 0) || (c+dc+dc > 7)) { return false; }
+  return check_line_match(who, dr, dc, r+dr+dr, c+dc+dc, board);
+}
 
-    function check_line_match(who, dr, dc, r, c, board) {
-      if (board[r][c] === who) {
-        return true;
-      }
-      if (board[r][c] === '') {
-        return false;
-      }
-      if ((r + dr < 0) || (r + dr > 7)) {
-        return false;
-      }
-      if ((c + dc < 0) || (c + dc > 7)) {
-        return false;
-      }
-      return check_line_match(who, dr, dc, r + dr, c + dc, board);
-    }
+function check_line_match(who, dr, dc, r, c, board) {
+  if(board[r][c] === who) { return true; }
+  if(board[r][c] === '') { return false; }
+  if((r+dr < 0) || (r+dr > 7)) { return false; }
+  if((c+dc < 0) || (c+dc > 7)) { return false; }
+  return check_line_match(who, dr, dc, r+dr, c+dc, board);
+}
 
-    function flip_board(who, row, column, board) {
+function flip_board(who, row, column, board) {
 
-      flip_line(who, -1, -1, row, column, board);
-      flip_line(who, -1, 0, row, column, board);
-      flip_line(who, -1, 1, row, column, board);
+  flip_line(who, -1, -1, row, column, board);
+  flip_line(who, -1, 0, row, column, board);
+  flip_line(who, -1, 1, row, column, board);
 
-      flip_line(who, 0, -1, row, column, board);
-      flip_line(who, 0, 1, row, column, board);
+  flip_line(who, 0, -1, row, column, board);
+  flip_line(who, 0, 1, row, column, board);
 
-      flip_line(who, 1, -1, row, column, board);
-      flip_line(who, 1, 0, row, column, board);
-      flip_line(who, 1, 1, row, column, board);
+  flip_line(who, 1, -1, row, column, board);
+  flip_line(who, 1, 0, row, column, board);
+  flip_line(who, 1, 1, row, column, board);
 
-    }
+}
 
     function flip_line(who, dr, dc, r, c, board) {
       if ((r + dr < 0) || (r + dr > 7)) {
